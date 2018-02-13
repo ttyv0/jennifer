@@ -18,6 +18,7 @@ const (
 	literalToken     tokenType = "literal"
 	literalRuneToken tokenType = "literal_rune"
 	literalByteToken tokenType = "literal_byte"
+	plainText        tokenType = "plain_text"
 	nullToken        tokenType = "null"
 	layoutToken      tokenType = "layout"
 )
@@ -93,6 +94,10 @@ func (t token) render(f *File, w io.Writer, s *Statement) error {
 		if _, err := w.Write([]byte(t.content.(string))); err != nil {
 			return err
 		}
+	case plainText:
+		if _, err := w.Write([]byte(t.content.(string))); err != nil {
+			return err
+		}
 	case nullToken: // notest
 		// do nothing (should never render a null token)
 	}
@@ -165,6 +170,87 @@ func (s *Statement) Op(op string) *Statement {
 	t := token{
 		typ:     operatorToken,
 		content: op,
+	}
+	*s = append(*s, t)
+	return s
+}
+
+func PlainText(text string) *Statement {
+	return newStatement().PlainText(text)
+}
+
+func (g *Group) PlainText(text string) *Statement {
+	s := PlainText(text)
+	g.items = append(g.items, s)
+	return s
+}
+
+func (s *Statement) PlainText(text string) *Statement {
+	t := token{
+		typ:     plainText,
+		content: text,
+	}
+	*s = append(*s, t)
+	return s
+}
+
+func PT(text string) *Statement {
+	return PlainText(text)
+}
+
+func (g *Group) PT(text string) *Statement {
+	return g.PlainText(text)
+}
+
+func (s *Statement) PT(text string) *Statement {
+	return s.PlainText(text)
+}
+
+func PlainTextf(text string, a ...interface{}) *Statement {
+	return newStatement().PlainTextf(text, a...)
+}
+
+func (g *Group) PlainTextf(text string, a ...interface{}) *Statement {
+	s := PlainTextf(text, a...)
+	g.items = append(g.items, s)
+	return s
+}
+
+func (s *Statement) PlainTextf(text string, a ...interface{}) *Statement {
+	t := token{
+		typ:     plainText,
+		content: fmt.Sprintf(text, a...),
+	}
+	*s = append(*s, t)
+	return s
+}
+
+func PTf(text string, a ...interface{}) *Statement {
+	return PlainTextf(text, a...)
+}
+
+func (g *Group) PTf(text string, a ...interface{}) *Statement {
+	return g.PlainTextf(text, a...)
+}
+
+func (s *Statement) PTf(text string, a ...interface{}) *Statement {
+	return s.PlainTextf(text, a...)
+}
+
+func Import(i string) *Statement {
+	return newStatement().Import(i)
+}
+
+func (g *Group) Import(i string) *Statement {
+	s := Import(i)
+	g.items = append(g.items, s)
+	return s
+}
+
+func (s *Statement) Import(i string) *Statement {
+	t := token{
+		typ:     packageToken,
+		content: i,
 	}
 	*s = append(*s, t)
 	return s
